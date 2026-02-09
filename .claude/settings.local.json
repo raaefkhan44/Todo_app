@@ -19,7 +19,8 @@
       "Bash(curl -s http://localhost:3000 -I)",
       "Bash(netstat -ano)",
       "Bash(findstr:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm run build)"
     ]
   }
 }
