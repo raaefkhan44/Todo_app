@@ -7,11 +7,13 @@ interface Todo {
   id?: string;
   title: string;
   description: string;
+  completed?: boolean;
   priority: 'low' | 'medium' | 'high';
   dueDate?: string;
   category?: string;
   tags?: string[];
   subtasks?: { id: string; title: string; completed: boolean }[];
+  createdAt?: string;
 }
 
 interface AddEditTodoModalProps {
