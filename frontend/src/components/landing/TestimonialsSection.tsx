@@ -76,7 +76,7 @@ const TestimonialsSection = () => {
                   <p className="text-sm text-gray-300">{testimonial.role}, {testimonial.company}</p>
                 </div>
               </div>
-              <p className="text-gray-300 italic">"{testimonial.content}"</p>
+              <p className="text-gray-300 italic">&ldquo;{testimonial.content}&rdquo;</p>
               <div className="flex mt-4 text-red-500">
                 {[...Array(5)].map((_, i) => (
                   <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 24 24">

@@ -18,7 +18,7 @@ const LoginPage = () => {
               Sign in to your account
             </p>
             <p className="mt-4 text-center text-sm text-gray-300">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link
                 href="/signup"
                 className="font-medium text-blue-500 hover:text-blue-400"
