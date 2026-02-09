@@ -1,0 +1,500 @@
+openapi: 3.0.3
+info:
+  title: Todo Application Backend API
+  description: |
+    REST API for Todo application with JWT-based authentication and user isolation.
+
+    **Authentication**: All endpoints require a valid JWT token in the Authorization header.
+
+    **User Isolation**: Users can only access their own tasks. The `user_id` in the URL path is ignored;
+    the authenticated user's ID from the JWT token is used for all operations.
+
+    **Security**: Cross-user access attempts return 404 Not Found to prevent information leakage.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.example.com
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: tasks
+    description: Task management operations
+
+paths:
+  /api/{user_id}/tasks:
+    get:
+      tags:
+        - tasks
+      summary: List all tasks for authenticated user
+      description: |
+        Returns all tasks belonging to the authenticated user. The `user_id` path parameter
+        is ignored; tasks are filtered by the user ID extracted from the JWT token.
+      operationId: listTasks
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID (ignored - JWT user_id is used)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+              example:
+                - id: "87654321-4321-4321-4321-210987654321"
+                  title: "Complete project documentation"
+                  description: "Write comprehensive docs for the API"
+                  completed: false
+                  priority: "high"
+                  due_date: "2026-02-15"
+                  tags: ["documentation", "urgent"]
+                  recurrence_pattern: null
+                  user_id: "12345678-1234-1234-1234-123456789012"
+                  created_at: "2026-02-09T10:00:00Z"
+                  updated_at: "2026-02-09T10:00:00Z"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - tasks
+      summary: Create a new task
+      description: |
+        Creates a new task for the authenticated user. The task is automatically assigned
+        to the user identified by the JWT token, regardless of the `user_id` path parameter.
+      operationId: createTask
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID (ignored - JWT user_id is used)
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+            example:
+              title: "Buy groceries"
+              description: "Milk, eggs, bread"
+              priority: "medium"
+              due_date: "2026-02-10"
+              tags: ["shopping", "personal"]
+              recurrence_pattern: "weekly"
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/{user_id}/tasks/{id}:
+    get:
+      tags:
+        - tasks
+      summary: Get a specific task
+      description: |
+        Retrieves a specific task by ID. Returns 404 if the task doesn't exist or doesn't
+        belong to the authenticated user.
+      operationId: getTask
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID (ignored - JWT user_id is used)
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - tasks
+      summary: Update a task
+      description: |
+        Updates an existing task. All fields in the request body are optional.
+        Returns 404 if the task doesn't exist or doesn't belong to the authenticated user.
+      operationId: updateTask
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID (ignored - JWT user_id is used)
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+            example:
+              title: "Buy groceries and cook dinner"
+              completed: false
+              priority: "high"
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - tasks
+      summary: Delete a task
+      description: |
+        Permanently deletes a task. Returns 404 if the task doesn't exist or doesn't
+        belong to the authenticated user.
+      operationId: deleteTask
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID (ignored - JWT user_id is used)
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Task deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/{user_id}/tasks/{id}/complete:
+    patch:
+      tags:
+        - tasks
+      summary: Toggle task completion status
+      description: |
+        Toggles the completion status of a task (completed: true ↔ false).
+        Returns 404 if the task doesn't exist or doesn't belong to the authenticated user.
+      operationId: toggleTaskCompletion
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID (ignored - JWT user_id is used)
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task completion status toggled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token issued by Better Auth. Include in Authorization header as:
+        `Authorization: Bearer <token>`
+
+  schemas:
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - completed
+        - tags
+        - user_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique task identifier
+          example: "87654321-4321-4321-4321-210987654321"
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Task title (required, non-empty)
+          example: "Complete project documentation"
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: Optional task description
+          example: "Write comprehensive docs for the API"
+        completed:
+          type: boolean
+          description: Task completion status
+          example: false
+        priority:
+          type: string
+          nullable: true
+          enum: [low, medium, high]
+          description: Task priority level
+          example: "high"
+        due_date:
+          type: string
+          format: date
+          nullable: true
+          description: Optional due date (ISO 8601 format YYYY-MM-DD)
+          example: "2026-02-15"
+        tags:
+          type: array
+          items:
+            type: string
+          description: Array of tag strings
+          example: ["documentation", "urgent"]
+        recurrence_pattern:
+          type: string
+          nullable: true
+          maxLength: 255
+          description: Optional recurrence pattern
+          example: "weekly"
+        user_id:
+          type: string
+          format: uuid
+          description: Owner user ID
+          example: "12345678-1234-1234-1234-123456789012"
+        created_at:
+          type: string
+          format: date-time
+          description: Task creation timestamp (ISO 8601)
+          example: "2026-02-09T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp (ISO 8601)
+          example: "2026-02-09T10:00:00Z"
+
+    TaskCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Task title (required, non-empty)
+          example: "Buy groceries"
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: Optional task description
+          example: "Milk, eggs, bread"
+        priority:
+          type: string
+          nullable: true
+          enum: [low, medium, high]
+          description: Task priority level
+          example: "medium"
+        due_date:
+          type: string
+          format: date
+          nullable: true
+          description: Optional due date (ISO 8601 format YYYY-MM-DD)
+          example: "2026-02-10"
+        tags:
+          type: array
+          items:
+            type: string
+          description: Array of tag strings
+          default: []
+          example: ["shopping", "personal"]
+        recurrence_pattern:
+          type: string
+          nullable: true
+          maxLength: 255
+          description: Optional recurrence pattern
+          example: "weekly"
+
+    TaskUpdate:
+      type: object
+      description: All fields are optional for updates
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Task title
+          example: "Buy groceries and cook dinner"
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: Task description
+          example: "Updated description"
+        completed:
+          type: boolean
+          description: Task completion status
+          example: false
+        priority:
+          type: string
+          nullable: true
+          enum: [low, medium, high]
+          description: Task priority level
+          example: "high"
+        due_date:
+          type: string
+          format: date
+          nullable: true
+          description: Due date (ISO 8601 format YYYY-MM-DD)
+          example: "2026-02-12"
+        tags:
+          type: array
+          items:
+            type: string
+          description: Array of tag strings
+          example: ["shopping", "urgent"]
+        recurrence_pattern:
+          type: string
+          nullable: true
+          maxLength: 255
+          description: Recurrence pattern
+          example: "daily"
+
+    Error:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Human-readable error message
+          example: "Task not found"
+
+    ValidationError:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              loc:
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                    - type: integer
+                description: Location of the error (e.g., ["body", "title"])
+              msg:
+                type: string
+                description: Error message
+              type:
+                type: string
+                description: Error type
+          example:
+            - loc: ["body", "title"]
+              msg: "field required"
+              type: "value_error.missing"
+            - loc: ["body", "priority"]
+              msg: "value is not a valid enumeration member; permitted: 'low', 'medium', 'high'"
+              type: "type_error.enum"
+
+  responses:
+    UnauthorizedError:
+      description: Authentication failed - missing, invalid, or expired JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Could not validate credentials"
+
+    NotFoundError:
+      description: Resource not found or doesn't belong to authenticated user
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Task not found"
+
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'

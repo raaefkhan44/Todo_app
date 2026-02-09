@@ -1,0 +1,20 @@
+# Spec-Kit Configuration
+
+version: "1.0"
+features:
+  - database
+  - ui
+projects:
+  frontend:
+    path: "./frontend"
+    type: "nextjs"
+  backend:
+    path: "./backend"
+    type: "fastapi"
+specs:
+  path: "./specs"
+  types:
+    - "database"
+    - "ui"
+output:
+  format: "markdown"

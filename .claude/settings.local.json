@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell Get-Content \"C:\\\\Users\\\\asrak\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-asrak-Desktop-quarter-4-Hackethon-2-Todo-app\\\\tasks\\\\bdf70a9.output\")",
+      "Bash(npx kill-port 3000 3001)",
+      "Bash(timeout:*)",
+      "Bash(npm run dev)",
+      "Bash(powershell Get-Content:*)",
+      "Bash(ls:*)",
+      "Bash(dir:*)",
+      "Bash(powershell.exe:*)",
+      "mcp__context7__query-docs",
+      "Bash(if [ -f \".specify/scripts/powershell/update-agent-context.ps1\" ])",
+      "Bash(then)",
+      "Bash(else:*)",
+      "Bash(fi)",
+      "Bash(python:*)",
+      "Bash(curl -s http://localhost:8000/)",
+      "Bash(curl -s http://localhost:3000 -I)",
+      "Bash(netstat -ano)",
+      "Bash(findstr:*)",
+      "Bash(curl:*)"
+    ]
+  }
+}
